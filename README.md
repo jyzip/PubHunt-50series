@@ -39,43 +39,27 @@ PubHunt [-check] [-h] [-v]
  inputFile                : List of the hash160, one per line in hex format (text mode)
 ```
 
-- Run: ```PubHunt.exe -gi 0 -gx 9216,1024 puzzle64.txt```
-- Run: ```PubHunt.exe -gi 0 -gx 8192,1024 hashes160.txt```
+- Run: ```PubHunt.exe -gx 231072,1024 puzzle64.txt```
+- Run: ```PubHunt.exe -gx 231072,1024 hashes160.txt```
 
 ```
-C:\Users\BOSS>PubHunt.exe -gi 0 -gx 9216,1024 puzzle64.txt
-
 PubHunt v1.00 (24.12.2021 phrutis Edition)
 
 DEVICE       : GPU
 GPU IDS      : 0
-GPU GRIDSIZE : 9216x1024
+GPU GRIDSIZE : 231072x1024
 NUM HASH160  : 1
 OUTPUT FILE  : Found.txt
-GPU          : GPU #0 NVIDIA GeForce RTX 2070 (36x64 cores) Grid(9216x1024)
+GPU          : GPU #0 NVIDIA GeForce RTX 5090 (170x0 cores) Grid(231072x1024)
 
-[00:10:37] [GPU: 363.60 Gkeys/s] [T: 242,432,650,248,192] [F: 0]
+[00:02:05] [GPU: 5191.80 Gkeys/s] [T: 650,081,652,965,376] [F: 0]
 ```
 
 ## Building
 ##### Windows
-- Microsoft Visual Studio Community 2019 
-- CUDA version [10.22](https://developer.nvidia.com/cuda-10.2-download-archive?target_os=Windows&target_arch=x86_64&target_version=10&target_type=exenetwork)
-##### Linux
- - Edit the makefile and set up the appropriate CUDA SDK and compiler paths for nvcc. Or pass them as variables to `make` command.
+- Microsoft Visual Studio Community 2022 
+- CUDA version [13.1]
 
-    ```make
-    CUDA       = /usr/local/cuda-11.5
-    CXXCUDA    = /usr/bin/g++
-    ```
- - To build CPU-only version (without CUDA support):
-    ```sh
-    $ make all
-    ```
- - To build with CUDA:
-    ```sh
-    $ make gpu=1 CCAP=35 all
-    ```
 ## License
 PubHunt is licensed under GPLv3.
 
