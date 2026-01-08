@@ -1,68 +1,145 @@
-# PubHunt - Hunt for Puzzles Public keys
+# PubHunt — GPU-Accelerated Public Key Hunting for Bitcoin Puzzles
+
 ![alt text](https://raw.githubusercontent.com/phrutis/LostCoins/main/Others/puzzle.jpg "PubHunt")
-</br>forked from [PubHunt](https://github.com/kanhavishva/PubHunt)</br>
+<br/>
+Forked from https://github.com/kanhavishva/PubHunt
+<br/>
 
-## It searches for random compressed Public keys for given hash160.
+## Overview
 
-## The idea to do this
-This is only useful for Bitcoin [puzzle transaction](https://www.blockchain.com/btc/tx/08389f34c98c606322740c0be6a7125d9860bb8d5cb182c02f98461e5fa6cd15).</br>
-For the [puzzles](https://privatekeys.pw/puzzles/bitcoin-puzzle-tx) **64, 66, 67, 68, 69, 71** or **72** and some more... </br>
-There are no Public keys are available, so if we can able to find Public keys for those addresses. </br>
-Then [Collider](https://github.com/phrutis/Collider) algorithm can be used to solve those puzzles.</br>
-That's it, cheers 🍺 
+PubHunt is a high-performance, GPU-only tool designed to search for compressed Bitcoin public keys that match a given hash160.
 
-## How does it work
-A public key is randomly generated and compared with the hash160 of the [puzzle](https://privatekeys.pw/puzzles/bitcoin-puzzle-tx) address.</br>
-Random Public key -> hex ripemd160 from address
+This fork introduces significant internal changes and optimisations, with a strong focus on improved utilisation of NVIDIA RTX 50-series GPUs. The project is an ongoing optimisation effort, and further performance tuning and architectural improvements are expected.
 
-## According to theory 
-1 puzzle address(ripemd160) is equal to **79,228,162,514,264,337,593,543,950,336** private keys in 256 bit</br> 
-**79,228,162,514,264,337,593,543,950,336** private keys = **79,228,162,514,264,337,593,543,950,336** public keys</br>
-**79,228,162,514,264,337,593,543,950,336** public keys = **1** puzzle address</br>
-Therefore, the chance of finding an address collision is much higher. &#127870; &#x20BF;
+The core objective remains unchanged: locate public keys corresponding to Bitcoin puzzle addresses where no public keys are publicly available.
+
+---
+
+## Purpose and Use Case
+
+This software is only relevant for specific Bitcoin puzzle transactions, such as:
+https://www.blockchain.com/btc/tx/08389f34c98c606322740c0be6a7125d9860bb8d5cb182c02f98461e5fa6cd15
+
+Target puzzles typically include (but are not limited to):
+64, 66, 67, 68, 69, 71, 72
+
+For these puzzles:
+- No public keys are known
+- Only the address (hash160) is available
+- If a valid public key is found, the Collider algorithm can then be used to attempt solving the puzzle
+
+This tool does not attempt to recover private keys directly.
+
+---
+
+## How It Works
+
+1. A random compressed public key is generated on the GPU
+2. The public key is hashed to produce a hash160
+3. The result is compared against one or more target puzzle hash160 values
+
+Simplified flow:
+
+Random Public Key  
+→ SHA256  
+→ RIPEMD160  
+→ Compare with target hash160
+
+If a match is found, the corresponding public key is written to the output file.
+
+---
+
+## Probability and Theory
+
+In a 256-bit keyspace:
+
+- One puzzle address (RIPEMD160) corresponds to  
+  79,228,162,514,264,337,593,543,950,336 possible private keys
+- Each private key maps to exactly one public key
+- Therefore, the same number of public keys map to a single puzzle address
+
+While the absolute odds remain extremely low, the probability of encountering a public key collision is significantly higher than guessing a specific private key directly. PubHunt exploits this property using massive parallelism on modern GPUs.
+
+---
+
+## GPU-Only Implementation
+
+- No CPU search support
+- CUDA-based implementation
+- Optimised kernel scheduling and memory usage
+- This fork includes improvements specifically targeting Ada-Next / Blackwell-class GPUs, including RTX 50-series cards
+- Performance tuning is ongoing and may change between revisions
+
+---
 
 ## Usage
-This is GPU only, no CPU support. 
-
 ```
 PubHunt.exe -h
-PubHunt [-check] [-h] [-v]
-        [-gi GPU ids: 0,1...] [-gx gridsize: g0x,g0y,g1x,g1y, ...]
-        [-o outputfile] [inputFile]
+```
+PubHunt [-check] [-h] [-v]  
+        [-gi GPU ids: 0,1...]  
+        [-gx gridsize: g0x,g0y,g1x,g1y,...]  
+        [-o outputfile]  
+        [inputFile]
 
- -v                       : Print version
- -gi gpuId1,gpuId2,...    : List of GPU(s) to use, default is 0
- -gx g1x,g1y,g2x,g2y, ... : Specify GPU(s) kernel gridsize, default is 8*(MP number),128
- -o outputfile            : Output results to the specified file
- -l                       : List cuda enabled devices
- -check                   : Check CPU and GPU kernel vs CPU
- inputFile                : List of the hash160, one per line in hex format (text mode)
+-v                       : Print version information  
+-gi gpuId1,gpuId2,...    : List of GPU(s) to use (default: 0)  
+-gx g1x,g1y,g2x,g2y,...  : Specify GPU kernel grid size  
+                           Default: 8 * (SM count), 128  
+-o outputfile            : Write results to specified file  
+-l                       : List CUDA-enabled devices  
+-check                   : Validate CPU vs GPU kernel correctness  
+inputFile                : Text file containing hash160 values  
+                           One per line, hex encoded  
+
+---
+
+## Example Runs
+```
+PubHunt.exe -gx 231072,1024 puzzle64.txt
+```
+```  
+PubHunt.exe -gx 231072,1024 hashes160.txt  
 ```
 
-- Run: ```PubHunt.exe -gx 231072,1024 puzzle64.txt```
-- Run: ```PubHunt.exe -gx 231072,1024 hashes160.txt```
 
+## Example Output
 ```
-PubHunt v1.00 (24.12.2021 phrutis Edition)
+PubHunt v1.01 (Jan 2026 JYzip Edition)
 
-DEVICE       : GPU
-GPU IDS      : 0
-GPU GRIDSIZE : 231072x1024
-NUM HASH160  : 1
-OUTPUT FILE  : Found.txt
+DEVICE       : GPU  
+GPU IDS      : 0  
+GPU GRIDSIZE : 231072x1024  
+NUM HASH160  : 1  
+OUTPUT FILE  : Found.txt  
 GPU          : GPU #0 NVIDIA GeForce RTX 5090 (170x0 cores) Grid(231072x1024)
 
 [00:02:05] [GPU: 5191.80 Gkeys/s] [T: 650,081,652,965,376] [F: 0]
+
 ```
 
+
 ## Building
-##### Windows
-- Microsoft Visual Studio Community 2022 
-- CUDA version [13.1]
+
+### Windows
+
+Required:
+- Microsoft Visual Studio Community 2022
+- NVIDIA CUDA Toolkit 13.1
+
+This fork assumes modern CUDA-capable hardware and is tested primarily against recent NVIDIA GPU architectures.
+
+---
+
+## Development Status
+
+- Actively optimised fork
+- Focused on better scheduling, throughput, and occupancy on RTX 50-series GPUs
+- Not considered feature-complete
+- Kernel behaviour and performance characteristics may change
+
+---
 
 ## License
-PubHunt is licensed under GPLv3.
 
-## Disclaimer
-ALL THE CODES, PROGRAM AND INFORMATION ARE FOR EDUCATIONAL PURPOSES ONLY. USE IT AT YOUR OWN RISK. THE DEVELOPER WILL NOT BE RESPONSIBLE FOR ANY LOSS, DAMAGE OR CLAIM ARISING FROM USING THIS PROGRAM.
-
+PubHunt is licensed under the GPLv3.
